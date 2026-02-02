@@ -1,0 +1,30 @@
+{
+  "name": "@machinefi/runtime",
+  "version": "0.1.0",
+  "description": "SDK and CLI runtime for wallet-linked machine sessions on Solana rails.",
+  "type": "module",
+  "license": "MIT",
+  "private": false,
+  "bin": {
+    "machinefi": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:smoke": "npm run build && node dist/cli/index.js status --chain solana --fixture"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "tsx": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
