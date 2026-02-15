@@ -8,3 +8,5 @@ MachineFi Runtime is a TypeScript SDK and CLI for wallet-linked autonomous machi
 npm install @machinefi/runtime
 npx machinefi status --chain solana --fixture
 ```
+
+Package entrypoints expose a CLI and typed runtime exports.
