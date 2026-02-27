@@ -10,3 +10,7 @@ npx machinefi status --chain solana --fixture
 ```
 
 Package entrypoints expose a CLI and typed runtime exports.
+
+## Runtime scope
+
+Machine identity, capabilities, sessions, fixtures, and receipt evidence are the first inspectable surfaces.
