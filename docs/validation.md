@@ -12,3 +12,5 @@ Validation is deliberately local, deterministic, and public-safe. The package va
 - receipt expectations where a requested amount, memo, machine ID, or session ID is unavailable in the fetched receipt.
 
 Fixture mode keeps examples deterministic. Live-read mode uses caller-supplied provider endpoints and remains read-only.
+
+Fixture status commands cover deterministic Solana runtime checks for CI and package review.
