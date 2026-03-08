@@ -12,3 +12,5 @@ it('CLI intent build requires amount and runtime ids', () => {
 });
 
 // CLI smoke coverage exercises fixture-mode machine commands.
+
+// CLI smoke coverage exercises fixture-mode machine commands.
