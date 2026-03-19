@@ -33,3 +33,38 @@ function compareExpectation(tx: SolanaTransaction | undefined, status: 'success'
     if (!tx) { reasons.push('expected recipient unavailable in transaction'); fields.push(evidence('to','unavailable',{ expected: expectedTo, matched: false })); }
     else if (!keys.includes(expectedTo)) { reasons.push('recipient account not found in transaction'); fields.push(evidence('accountInvolvement','transaction',{ expected: expectedTo, matched: false, detail: 'account involvement only, not transfer settlement' })); }
     else if (!hasTransferCounterparty) { addReason('transfer counterparty evidence unavailable'); fields.push(evidence('accountInvolvement','transaction',{ expected: expectedTo, matched: false, detail: 'account involvement only, not transfer settlement' })); }
+    else if (!transfer) { addReason('transfer direction evidence unavailable'); fields.push(evidence('accountInvolvement','transaction',{ expected: expectedTo, matched: false, detail: 'account involvement only, not transfer settlement' })); }
+    else { fields.push(evidence('to','balance_delta',{ expected: expectedTo, matched: true, detail: 'recipient credit supports transfer direction' })); }
+  }
+  if (expectation.amount) {
+    if (transfer !== undefined) { const matched = baseUnitsEqualDecimal(transfer.recipientCredit, expectation.amount, 9); if (!matched) reasons.push('amount mismatch'); fields.push(evidence('amount','balance_delta',{ expected: expectation.amount, actual: transfer.recipientCredit.toString(), matched, detail: `SOL recipient credit in lamports; sender debit ${transfer.senderDebit.toString()}; fee gap ${transfer.feeGap.toString()}` })); }
+    else if (fixture && tx?.amount !== undefined) { const matched = tx.amount === expectation.amount; if (!matched) reasons.push('amount mismatch'); fields.push(evidence('amount','fixture',{ expected: expectation.amount, actual: tx.amount, matched, detail: 'fixture envelope amount, not reconstructed transfer evidence' })); }
+    else { reasons.push('expected amount unavailable in transaction'); fields.push(evidence('amount','unavailable',{ expected: expectation.amount, matched: false, detail: 'transfer/balance-delta evidence unavailable' })); }
+  }
+  const memo = memoFromLogs(tx) ?? tx?.memo;
+  if (expectation.memo) { if (!memo) { reasons.push('expected memo unavailable in transaction'); fields.push(evidence('memo','unavailable',{ expected: expectation.memo, matched: false })); } else { const matched = memo === expectation.memo; if (!matched) reasons.push('memo mismatch'); fields.push(evidence('memo', memoFromLogs(tx) ? 'memo_log' : fixture ? 'fixture' : 'machinefi_envelope', { expected: expectation.memo, actual: memo, matched })); } }
+  for (const [field, actual] of [['machineId', tx?.machineId], ['sessionId', tx?.sessionId]] as const) { const expected = expectation[field]; if (!expected) continue; if (actual === undefined) { reasons.push(`expected ${field} unavailable in transaction`); fields.push(evidence(field,'unavailable',{ expected, matched: false })); } else { const matched = actual === expected; if (!matched) reasons.push(`${field === 'machineId' ? 'machine id' : 'session id'} mismatch`); fields.push(evidence(field, fixture ? 'fixture' : 'machinefi_envelope', { expected, actual, matched })); } }
+  return { matched: reasons.length === 0, reasons, fields };
+}
+export async function verifySolanaReceipt(signature: string, options: SolanaVerifyOptions = {}): Promise<RuntimeResult<ReceiptVerification>> {
+  if (!isSolanaSignature(signature)) return err('invalid_input', 'Invalid Solana signature');
+  if (options.expectation?.from && !isSolanaAddress(options.expectation.from)) return err('invalid_input', 'Invalid expected from account');
+  if (options.expectation?.to && !isSolanaAddress(options.expectation.to)) return err('invalid_input', 'Invalid expected to account');
+  try {
+    if (options.fixture) {
+      const fixture = getFixtureReceipt('solana', signature) as (StatusValue & SolanaTransaction & { status: string; id: string }) | undefined;
+      if (!fixture) return ok({ chain: 'solana', id: signature, found: false, verified: false, chainMatched: true, status: 'not_found', explorerUrl: solanaTxUrl(signature) });
+      const status: 'success' | 'failed' = fixture.status === 'success' && !fixture.err ? 'success' : 'failed';
+      const expectation = compareExpectation(fixture, status, options.expectation, true);
+      return ok({ chain: 'solana', id: signature, found: true, verified: status === 'success' && expectation.matched, chainMatched: true, status, statusMatched: !options.expectation?.status || options.expectation.status === status, expectationsMatched: expectation.matched, mismatchReasons: expectation.reasons, finality: fixture.confirmationStatus ?? 'finalized', confirmations: fixture.confirmations ?? undefined, block: fixture.slot, explorerUrl: solanaTxUrl(signature), raw: fixture, evidence: expectation.fields, settlementEvidence: splitEvidence(expectation.fields) });
+    }
+    const transport = createSolanaTransport(options);
+    const statuses = await transport.request<{ value: Array<StatusValue | null> }>('getSignatureStatuses', [[signature], { searchTransactionHistory: options.searchTransactionHistory ?? true }]);
+    const statusValue = statuses.value[0];
+    if (!statusValue) return ok({ chain: 'solana', id: signature, found: false, verified: false, chainMatched: true, status: 'not_found', explorerUrl: solanaTxUrl(signature) });
+    const tx = await transport.request<SolanaTransaction | null>('getTransaction', [signature, { encoding: 'json', commitment: options.commitment ?? 'confirmed', maxSupportedTransactionVersion: 0 }]);
+    const status: 'success' | 'failed' | 'pending' = statusValue.err || tx?.meta?.err ? 'failed' : tx ? 'success' : 'pending';
+    const expectation = compareExpectation(tx ?? undefined, status, options.expectation, false);
+    return ok({ chain: 'solana', id: signature, found: true, verified: status === 'success' && expectation.matched, chainMatched: true, status, statusMatched: !options.expectation?.status || options.expectation.status === status, expectationsMatched: expectation.matched, mismatchReasons: expectation.reasons, finality: statusValue.confirmationStatus ?? (tx ? 'confirmed' : 'pending'), confirmations: statusValue.confirmations ?? undefined, explorerUrl: solanaTxUrl(signature), raw: tx ?? statusValue, evidence: expectation.fields, settlementEvidence: splitEvidence(expectation.fields), ...(tx?.slot ?? statusValue.slot ? { block: tx?.slot ?? statusValue.slot } : {}) });
+  } catch (cause) { return err('rpc_error', 'Solana receipt lookup failed', cause); }
+}
