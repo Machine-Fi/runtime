@@ -1,20 +1,47 @@
 {
   "name": "@machinefi/runtime",
-  "version": "0.1.0",
-  "description": "SDK and CLI runtime for wallet-linked machine sessions on Solana rails.",
+  "version": "0.2.0",
+  "description": "SDK and CLI runtime for Solana machine sessions and deterministic fixtures.",
   "type": "module",
   "license": "MIT",
   "private": false,
   "bin": {
     "machinefi": "./dist/cli/index.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./robinhood": {
+      "types": "./dist/adapters/robinhood/chain.d.ts",
+      "import": "./dist/adapters/robinhood/chain.js"
+    },
+    "./solana": {
+      "types": "./dist/adapters/solana/provider.d.ts",
+      "import": "./dist/adapters/solana/provider.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs",
+    "fixtures",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:smoke": "npm run build && node dist/cli/index.js status --chain solana --fixture"
+    "test:smoke": "npm run build && node dist/cli/index.js pair --chain robinhood --fixture --machine-id robot-arm-17 --wallet 0x1111111111111111111111111111111111111111 --operator ops-alpha && node dist/cli/index.js pair --chain solana --fixture --machine-id drone-9 --wallet 11111111111111111111111111111111 --operator ops-alpha && node dist/cli/index.js status --chain robinhood --fixture && node dist/cli/index.js intent build --chain robinhood --source 0x1111111111111111111111111111111111111111 --recipient 0x2222222222222222222222222222222222222222 --amount 1.25 --machine-id robot-arm-17 --session-id session-1 --fixture && node dist/cli/index.js verify --chain robinhood --tx 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --fixture --from 0x1111111111111111111111111111111111111111 --to 0x2222222222222222222222222222222222222222 --amount 1.25 && node dist/cli/index.js verify --chain solana --signature 5HueCGU8rMjxEXxiPuD5BDuRaRj1hUXQG48GhYnjmQumooWcT3Yr4v7e1i4bnzK7t1Q7Fxx4E2VPu7Y9xV1r5fq --fixture --from 11111111111111111111111111111111 --to Sysvar1111111111111111111111111111111111111",
+    "pack:preview": "npm pack --dry-run --json",
+    "prepack": "node scripts/use-npm-readme.mjs",
+    "postpack": "node scripts/restore-github-readme.mjs"
   },
-  "dependencies": {},
+  "dependencies": {
+    "viem": "^2.21.55"
+  },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2",
@@ -26,5 +53,23 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Machine-Fi/runtime.git"
+  },
+  "homepage": "https://github.com/Machine-Fi/runtime#readme",
+  "bugs": {
+    "url": "https://github.com/Machine-Fi/runtime/issues"
+  },
+  "keywords": [
+    "machinefi",
+    "runtime",
+    "solana",
+    "robinhood",
+    "wallet",
+    "settlement",
+    "receipts",
+    "cli"
+  ]
 }
