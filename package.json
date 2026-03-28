@@ -1,7 +1,7 @@
 {
   "name": "@machinefi/runtime",
-  "version": "0.2.0",
-  "description": "SDK and CLI runtime for Solana machine sessions and deterministic fixtures.",
+  "version": "0.3.0",
+  "description": "SDK and CLI runtime for Solana sessions, receipt checks, and settlement intents.",
   "type": "module",
   "license": "MIT",
   "private": false,
