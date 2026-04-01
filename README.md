@@ -16,3 +16,5 @@ Package entrypoints expose a CLI and typed runtime exports.
 Machine identity, capabilities, sessions, fixtures, and receipt evidence are the first inspectable surfaces.
 
 Solana fixture status checks keep examples deterministic while provider reads stay caller configured.
+
+Solana settlement intents are unsigned records for caller-wallet flows.
