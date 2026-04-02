@@ -18,3 +18,5 @@ Machine identity, capabilities, sessions, fixtures, and receipt evidence are the
 Solana fixture status checks keep examples deterministic while provider reads stay caller configured.
 
 Solana settlement intents are unsigned records for caller-wallet flows.
+
+Solana fixture status checks keep examples deterministic while provider reads stay caller configured.
