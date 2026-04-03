@@ -12,3 +12,5 @@
 - Added generic machine session schemas, provider config, receipt schemas, and settlement-intent primitives.
 
 - Extended Solana receipt checks with signature, status, and memo-oriented evidence.
+
+- Extended Solana receipt checks with signature, status, and memo-oriented evidence.
