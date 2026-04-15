@@ -18,3 +18,7 @@
 - Extended Solana receipt checks with signature, status, and memo-oriented evidence.
 
 - Extended Solana receipt checks with signature, status, and memo-oriented evidence.
+
+## v0.4.x — Generic EVM provider groundwork
+
+- Added provider transport boundaries and receipt evidence types used by EVM-compatible rails.
