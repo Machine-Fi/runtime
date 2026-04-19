@@ -64,3 +64,36 @@ function fieldSummary(name: string, evidenceFields: ReceiptEvidenceField[]): Fie
 
 export function summarizeReceiptExpectationEvidence(expectation: ReceiptExpectation, evidenceFields: ReceiptEvidenceField[]): ReceiptExpectationSummary {
   const names = expectedReceiptFieldNames(expectation);
+  const fieldSummaries = names.map((name) => fieldSummary(name, evidenceFields));
+  return {
+    matched: fieldSummaries.every((field) => field.matched && !field.unavailable),
+    unavailableFields: fieldSummaries.filter((field) => field.unavailable).map((field) => field.field),
+    mismatchedFields: fieldSummaries.filter((field) => !field.matched && !field.unavailable).map((field) => field.field),
+    nativeFields: fieldSummaries.filter((field) => field.native).map((field) => field.field),
+    envelopeFields: fieldSummaries.filter((field) => field.envelope).map((field) => field.field),
+    fixtureFields: fieldSummaries.filter((field) => fixtureSources.has(field.source as EvidenceSource)).map((field) => field.field),
+    fieldSummaries
+  };
+}
+
+export function assertExpectedFieldsAvailable(expectation: ReceiptExpectation, evidenceFields: ReceiptEvidenceField[]): void {
+  const summary = summarizeReceiptExpectationEvidence(expectation, evidenceFields);
+  if (!summary.matched) {
+    const unavailable = summary.unavailableFields.length ? `unavailable: ${summary.unavailableFields.join(', ')}` : '';
+    const mismatched = summary.mismatchedFields.length ? `mismatched: ${summary.mismatchedFields.join(', ')}` : '';
+    throw new Error([unavailable, mismatched].filter(Boolean).join('; ') || 'receipt expectations not satisfied');
+  }
+}
+
+export function receiptEvidenceCoverageRatio(summary: ReceiptExpectationSummary): number {
+  if (summary.fieldSummaries.length === 0) return 1;
+  const satisfied = summary.fieldSummaries.filter((field) => field.matched && !field.unavailable).length;
+  return satisfied / summary.fieldSummaries.length;
+}
+
+export function receiptEvidenceCoverageLabel(summary: ReceiptExpectationSummary): 'complete' | 'partial' | 'unavailable' {
+  const ratio = receiptEvidenceCoverageRatio(summary);
+  if (ratio === 1) return 'complete';
+  if (ratio === 0) return 'unavailable';
+  return 'partial';
+}
