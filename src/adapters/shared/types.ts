@@ -28,3 +28,33 @@ export interface MachineSession {
 export interface ProviderConfig { chain: RuntimeChain; rpcUrl?: string | undefined; fixture?: boolean | undefined; timeoutMs?: number | undefined; }
 
 export interface ReceiptExpectation {
+  status?: 'success' | 'failed' | 'pending' | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
+  recipient?: string | undefined;
+  amount?: string | undefined;
+  asset?: string | undefined;
+  memo?: string | undefined;
+  sessionId?: string | undefined;
+  machineId?: string | undefined;
+}
+
+export interface ReceiptVerification {
+  chain: RuntimeChain;
+  id: string;
+  found: boolean;
+  verified?: boolean | undefined;
+  chainMatched?: boolean | undefined;
+  status: 'success' | 'failed' | 'pending' | 'not_found';
+  statusMatched?: boolean | undefined;
+  expectationsMatched?: boolean | undefined;
+  mismatchReasons?: string[] | undefined;
+  finality?: 'finalized' | 'confirmed' | 'processed' | 'pending' | 'unknown' | undefined;
+  confirmations?: number | undefined;
+  block?: string | number | undefined;
+  explorerUrl?: string | undefined;
+  raw?: unknown;
+  evidence?: ReceiptEvidenceField[] | undefined;
+  settlementEvidence?: SettlementEvidence | undefined;
+}
+
