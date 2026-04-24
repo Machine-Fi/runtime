@@ -58,3 +58,34 @@ export interface ReceiptVerification {
   settlementEvidence?: SettlementEvidence | undefined;
 }
 
+
+export interface SettlementIntent {
+  intentId: string;
+  chain: RuntimeChain;
+  source: string;
+  recipient: string;
+  asset: string;
+  amount: string;
+  machineId: string;
+  sessionId: string;
+  policyId: string;
+  memo?: string | undefined;
+  reference?: string | undefined;
+  nonce: string;
+  expiresAt?: string | undefined;
+  createdAt: string;
+  signingMode: 'caller-wallet';
+  broadcast: false;
+  metadata?: Record<string, string | number | boolean>;
+}
+
+export interface ChainStatusResult {
+  ok: boolean;
+  mode: RuntimeMode;
+  chain: RuntimeChain;
+  chainMatched: boolean;
+  rpcReachable: boolean;
+  latencyMs: number;
+  details: Record<string, unknown>;
+  error?: string | undefined;
+}
