@@ -32,3 +32,5 @@ Solana fixture status checks keep examples deterministic while provider reads st
 Solana settlement intents are unsigned records for caller-wallet flows.
 
 Solana fixture status checks keep examples deterministic while provider reads stay caller configured.
+
+Provider transports are read-only boundaries for receipt and status inspection.
