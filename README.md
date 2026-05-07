@@ -36,3 +36,5 @@ Solana fixture status checks keep examples deterministic while provider reads st
 Provider transports are read-only boundaries for receipt and status inspection.
 
 Base-unit comparisons avoid decimal rounding in receipt expectations.
+
+Provider transports are read-only boundaries for receipt and status inspection.
