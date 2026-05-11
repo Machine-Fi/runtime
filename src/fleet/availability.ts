@@ -26,3 +26,32 @@ export function scoreMachineForWorkOrder(entry: FleetRegistryEntry, order: Pick<
   const capabilityScore = order.requirement.capabilities.length === 0 ? 0 : Math.round((matchedCapabilities.length / order.requirement.capabilities.length) * 40);
   const healthScore = entry.health === 'nominal' || entry.health === undefined ? 20 : entry.health === 'degraded' ? 8 : 0;
   return {
+    machineId: entry.machineId,
+    assignable: assignable.ok,
+    score: assignable.ok ? batteryScore + capabilityScore + healthScore : 0,
+    reasons: assignable.reasons,
+    matchedCapabilities,
+    missingCapabilities
+  };
+}
+
+export function selectMachineForWorkOrder(entries: FleetRegistryEntry[], order: Pick<MachineWorkOrder, 'workOrderId' | 'requirement'>): FleetSelectionResult {
+  const candidates = entries
+    .map((entry) => scoreMachineForWorkOrder(entry, order))
+    .sort((a, b) => b.score - a.score || a.machineId.localeCompare(b.machineId));
+  return {
+    workOrderId: order.workOrderId,
+    selectedMachineId: candidates.find((candidate) => candidate.assignable)?.machineId,
+    candidates
+  };
+}
+
+export function summarizeFleetReadiness(entries: FleetRegistryEntry[]): { ready: number; degraded: number; offline: number; active: number } {
+  return entries.reduce((summary, entry) => {
+    if (entry.status === 'offline' || entry.health === 'offline') summary.offline += 1;
+    else if (entry.health === 'degraded' || entry.status === 'faulted' || entry.health === 'faulted') summary.degraded += 1;
+    else summary.ready += 1;
+    if (entry.activeJobId) summary.active += 1;
+    return summary;
+  }, { ready: 0, degraded: 0, offline: 0, active: 0 });
+}
