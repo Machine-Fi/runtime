@@ -42,3 +42,7 @@ Provider transports are read-only boundaries for receipt and status inspection.
 Base-unit comparisons avoid decimal rounding in receipt expectations.
 
 Provider transports are read-only boundaries for receipt and status inspection.
+
+## Runtime flow
+
+Machine sessions produce work orders, telemetry snapshots, policy decisions, settlement intents, and receipt evidence records.
