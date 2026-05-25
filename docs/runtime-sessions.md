@@ -7,3 +7,5 @@ Session creation validates the rail-specific wallet format, machine id, operator
 Sessions do not grant robot-control authority. Production hardware adapters, private policy engines, provider routing, and treasury controls remain platform services outside this package.
 
 Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
+
+Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
