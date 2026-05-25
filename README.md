@@ -46,3 +46,7 @@ Provider transports are read-only boundaries for receipt and status inspection.
 ## Runtime flow
 
 Machine sessions produce work orders, telemetry snapshots, policy decisions, settlement intents, and receipt evidence records.
+
+## Inspectable package surfaces
+
+Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoints.
