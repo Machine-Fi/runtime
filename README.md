@@ -50,3 +50,7 @@ Machine sessions produce work orders, telemetry snapshots, policy decisions, set
 ## Inspectable package surfaces
 
 Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoints.
+
+## Inspectable package surfaces
+
+Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoints.
