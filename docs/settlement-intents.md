@@ -15,3 +15,5 @@ Unsigned settlement intents include a nonce in the intent id. By default the run
 Settlement intents remain unsigned records for caller-wallet flows.
 
 Settlement intents remain unsigned records for caller-wallet flows.
+
+Settlement intents remain unsigned records for caller-wallet flows.
