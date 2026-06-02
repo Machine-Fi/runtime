@@ -11,3 +11,5 @@ Session inspection links machine identity, wallet address, chain, and fixture/li
 Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
 
 Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
+
+Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
