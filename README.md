@@ -58,3 +58,7 @@ Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoi
 ## Inspectable package surfaces
 
 Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoints.
+
+## Inspectable package surfaces
+
+Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoints.
