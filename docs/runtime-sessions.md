@@ -5,13 +5,3 @@ A runtime session links a machine identity to a wallet/account, operator, policy
 Session creation validates the rail-specific wallet format, machine id, operator, fixture/live mode, and optional metadata. Fleet registry helpers can then attach the session to public-safe machine status, battery/health summary, last telemetry reference, and active work order id.
 
 Sessions do not grant robot-control authority. Production hardware adapters, private policy engines, provider routing, and treasury controls remain platform services outside this package.
-
-Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
-
-Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
-
-Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
-
-Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
-
-Session inspection links machine identity, wallet address, chain, and fixture/live-read mode.
