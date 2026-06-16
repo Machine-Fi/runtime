@@ -11,11 +11,3 @@ Policy and job helpers compare settlement amounts as validated decimal strings c
 ## Nonce and decimal precision
 
 Unsigned settlement intents include a nonce in the intent id. By default the runtime creates a fresh nonce for each intent; callers may still provide an explicit nonce for reproducible tests or idempotent workflows. Amount validation uses rail and asset decimals before producing caller-wallet intent records.
-
-Settlement intents remain unsigned records for caller-wallet flows.
-
-Settlement intents remain unsigned records for caller-wallet flows.
-
-Settlement intents remain unsigned records for caller-wallet flows.
-
-Settlement intents remain unsigned records for caller-wallet flows.
