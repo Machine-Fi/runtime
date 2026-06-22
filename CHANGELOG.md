@@ -26,3 +26,5 @@
 - Added EVM-compatible evidence shapes before rail-specific adapters.
 
 - Added EVM-compatible evidence shapes before rail-specific adapters.
+
+- Hardened amount comparison and unavailable-evidence summaries.
