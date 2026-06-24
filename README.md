@@ -66,3 +66,5 @@ Builders can inspect TypeScript sources, fixtures, tests, docs, and CLI entrypoi
 Receipt expectations report unavailable evidence instead of treating account involvement as settlement.
 
 Telemetry validation keeps machine status snapshots bounded and explicit.
+
+Receipt expectations report unavailable evidence instead of treating account involvement as settlement.
