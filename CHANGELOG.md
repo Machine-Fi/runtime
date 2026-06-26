@@ -28,3 +28,8 @@
 - Added EVM-compatible evidence shapes before rail-specific adapters.
 
 - Hardened amount comparison and unavailable-evidence summaries.
+
+## v0.6.x — Robinhood testnet rail
+
+- Added Robinhood testnet rail metadata and fixture examples after the public testnet window.
+- Kept EVM-compatible abstractions separate from mainnet examples until mainnet availability.
