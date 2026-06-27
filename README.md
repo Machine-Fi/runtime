@@ -68,3 +68,7 @@ Receipt expectations report unavailable evidence instead of treating account inv
 Telemetry validation keeps machine status snapshots bounded and explicit.
 
 Receipt expectations report unavailable evidence instead of treating account involvement as settlement.
+
+## EVM-compatible rail checks
+
+Generic provider reads are configured by callers and exercised with deterministic fixtures in CI.
