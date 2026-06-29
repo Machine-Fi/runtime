@@ -72,3 +72,5 @@ Receipt expectations report unavailable evidence instead of treating account inv
 ## EVM-compatible rail checks
 
 Generic provider reads are configured by callers and exercised with deterministic fixtures in CI.
+
+Testnet fixture checks exercise rail metadata without signing or broadcasting.
