@@ -33,3 +33,5 @@
 
 - Added Robinhood testnet rail metadata and fixture examples after the public testnet window.
 - Kept EVM-compatible abstractions separate from mainnet examples until mainnet availability.
+
+- Added EVM rail status checks for public testnet fixtures.
