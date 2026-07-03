@@ -35,3 +35,41 @@ function compareExpectation(receipt: EvmReceipt, tx: EvmTransaction | undefined,
   for (const [field, actual] of [['machineId', receipt.machineId], ['sessionId', receipt.sessionId], ['memo', receipt.memo]] as const) {
     const expected = expectation[field];
     if (!expected) continue;
+    if (actual === undefined) { reasons.push(`expected ${field} unavailable in receipt`); fields.push(evidence(field,'unavailable',{ expected, matched: false })); }
+    else { const matched = actual === expected; if (!matched) reasons.push(`${field === 'machineId' ? 'machine id' : field === 'sessionId' ? 'session id' : 'memo'} mismatch`); fields.push(evidence(field, fixture ? 'fixture' : 'machinefi_envelope', { expected, actual, matched, detail: fixture ? 'fixture envelope metadata' : 'MachineFi envelope metadata' })); }
+  }
+  return { matched: reasons.length === 0, reasons, fields };
+}
+export async function verifyRobinhoodReceipt(txHash: string, options: RobinhoodVerifyOptions = {}): Promise<RuntimeResult<ReceiptVerification>> {
+  if (!isEvmTxHash(txHash)) return err('invalid_input', 'Invalid Robinhood transaction hash');
+  if (options.expectation?.from && !isEvmAddress(options.expectation.from)) return err('invalid_input', 'Invalid expected from address');
+  if (options.expectation?.to && !isEvmAddress(options.expectation.to)) return err('invalid_input', 'Invalid expected to address');
+  try {
+    const transport = options.fixture ? undefined : createRobinhoodTransport(options);
+    const chainId = options.fixture ? `0x${ROBINHOOD_CHAIN_ID.toString(16)}` : await transport!.request<string>('eth_chainId', []);
+    const chainMatched = Number.parseInt(chainId, 16) === ROBINHOOD_CHAIN_ID;
+    if (!chainMatched) return ok({ chain: 'robinhood', id: txHash, found: false, verified: false, chainMatched, status: 'not_found', statusMatched: false, expectationsMatched: false, mismatchReasons: [`expected Robinhood chain ${ROBINHOOD_CHAIN_ID} got ${chainId}`], evidence: [evidence('chainId','native_receipt',{ expected: String(ROBINHOOD_CHAIN_ID), actual: chainId, matched: false })], explorerUrl: robinhoodTxUrl(txHash) });
+    const receipt = options.fixture ? getFixtureReceipt('robinhood', txHash) as EvmReceipt | undefined : await transport!.request<EvmReceipt | null>('eth_getTransactionReceipt', [txHash]);
+    if (!receipt) return ok({ chain: 'robinhood', id: txHash, found: false, verified: false, chainMatched, status: 'not_found', statusMatched: false, expectationsMatched: false, explorerUrl: robinhoodTxUrl(txHash) });
+    const tx = options.fixture ? undefined : await transport!.request<EvmTransaction | null>('eth_getTransactionByHash', [txHash]).catch(() => null) ?? undefined;
+    const status: 'success' | 'failed' | 'pending' = receipt.status === '0x1' ? 'success' : receipt.status === '0x0' ? 'failed' : 'pending';
+    const expectation = compareExpectation(receipt, tx, status, options.expectation, options.fixture);
+    let confirmations = 0;
+    let finality: 'finalized' | 'confirmed' | 'pending' = 'pending';
+    if (receipt.blockNumber) {
+      if (options.fixture) { confirmations = receipt.blockNumber ? 1 : 0; finality = confirmations > 0 ? 'confirmed' : 'pending'; }
+      else {
+        const currentBlockHex = await transport!.request<string>('eth_blockNumber', []).catch(() => undefined);
+        if (typeof currentBlockHex === 'string') { const derived = deriveEvmConfirmations({ receiptBlock: receipt.blockNumber, currentBlock: currentBlockHex }); confirmations = derived.confirmations; finality = derived.finality === 'finalized' ? 'finalized' : confirmations > 0 ? 'confirmed' : 'pending'; }
+      }
+    }
+    const minimumConfirmations = options.minConfirmations ?? 0;
+    const confirmationMatched = confirmations >= minimumConfirmations;
+    const reasons = [...expectation.reasons];
+    const fields = [...expectation.fields];
+    if (!confirmationMatched) { reasons.push(`minimum confirmations not reached: expected ${minimumConfirmations} got ${confirmations}`); }
+    const expectationsMatched = expectation.matched && confirmationMatched;
+    const verified = chainMatched && status === 'success' && expectationsMatched;
+    return ok({ chain: 'robinhood', id: txHash, found: true, verified, chainMatched, status, statusMatched: !options.expectation?.status || options.expectation.status === status, expectationsMatched, mismatchReasons: reasons, finality, confirmations, explorerUrl: robinhoodTxUrl(txHash), raw: { receipt, transaction: tx ?? undefined }, evidence: fields, settlementEvidence: splitEvidence(fields), ...(receipt.blockNumber ? { block: receipt.blockNumber } : {}) });
+  } catch (cause) { return err('rpc_error', 'Robinhood receipt lookup failed', cause); }
+}
