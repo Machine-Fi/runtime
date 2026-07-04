@@ -1,0 +1,17 @@
+{
+  "chainId": "0x1237",
+  "receipts": [
+    {
+      "id": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "transactionHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "0x1",
+      "blockNumber": "0x1237",
+      "from": "0x1111111111111111111111111111111111111111",
+      "to": "0x2222222222222222222222222222222222222222",
+      "value": "1.25",
+      "machineId": "robot-arm-17",
+      "sessionId": "mfi_robinhood_fixture_session",
+      "memo": "job:warehouse-route-44"
+    }
+  ]
+}
