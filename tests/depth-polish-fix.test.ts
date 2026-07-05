@@ -116,3 +116,63 @@ describe('depth polish fix pass decimal policy comparisons', () => {
 describe('depth polish fix pass reusable finality and limit helpers', () => {
   it('derives EVM finality helper outputs from receipt and current block', async () => {
     const { deriveEvmConfirmations, finalityMeetsMinimum } = await import('../src/adapters/shared/finality.js');
+    const derived = deriveEvmConfirmations({ receiptBlock: '0x100', currentBlock: '0x145', minimumFinalized: 64 });
+    expect(derived.confirmations).toBe(70);
+    expect(derived.finality).toBe('finalized');
+    expect(finalityMeetsMinimum(derived.finality, 'confirmed')).toBe(true);
+  });
+
+  it('normalizes Solana finality without inventing deeper status', async () => {
+    const { normalizeSolanaFinality } = await import('../src/adapters/shared/finality.js');
+    expect(normalizeSolanaFinality('processed', true)).toBe('processed');
+    expect(normalizeSolanaFinality(undefined, true)).toBe('confirmed');
+    expect(normalizeSolanaFinality(undefined, false)).toBe('pending');
+  });
+
+  it('evaluates settlement limits with rail decimals and base-unit outputs', async () => {
+    const { evaluateSettlementAmountLimit, amountWithinLimit, amountExceedsLimit } = await import('../src/settlement/policy-limits.js');
+    const accepted = evaluateSettlementAmountLimit({ chain: 'solana', asset: 'SOL', amount: '0.000000001', maxAmount: '0.000000001' });
+    expect(accepted).toMatchObject({ accepted: true, amountBaseUnits: '1', maxBaseUnits: '1', decimals: 9 });
+    const rejected = evaluateSettlementAmountLimit({ chain: 'robinhood', asset: 'ETH', amount: '0.100000000000000002', maxAmount: '0.100000000000000001' });
+    expect(rejected.accepted).toBe(false);
+    expect(rejected.reasons).toContain('amount exceeds policy limit 0.100000000000000001');
+    expect(amountWithinLimit('1.000001', '1.000001', 'solana', 'USDC')).toBe(true);
+    expect(amountExceedsLimit('1.000002', '1.000001', 'solana', 'USDC')).toBe(true);
+  });
+});
+
+describe('depth polish fix pass receipt expectation summary helper', () => {
+  it('summarizes unavailable expected fields for SDK callers', async () => {
+    const { summarizeReceiptExpectationEvidence, receiptEvidenceCoverageLabel } = await import('../src/adapters/shared/expectation-summary.js');
+    const url = await rpc((method) => method === 'eth_chainId' ? '0x1237' : method === 'eth_getTransactionReceipt' ? { transactionHash: txHash, status: '0x1', blockNumber: '0x20', from: fromEvm, to: toEvm, logs: [] } : method === 'eth_blockNumber' ? '0x21' : null);
+    const expectation = { amount: '1.25', memo: 'memo-missing', machineId: 'machine-missing', sessionId: 'session-missing' };
+    const result = await verifyRobinhoodReceipt(txHash, { rpcUrl: url, expectation });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    const summary = summarizeReceiptExpectationEvidence(expectation, result.value.evidence ?? []);
+    expect(summary.matched).toBe(false);
+    expect(summary.unavailableFields.sort()).toEqual(['amount', 'machineId', 'memo', 'sessionId'].sort());
+    expect(summary.nativeFields).toEqual([]);
+    expect(summary.fixtureFields).toEqual([]);
+    expect(receiptEvidenceCoverageLabel(summary)).toBe('unavailable');
+  });
+
+  it('separates native transaction amount evidence from fixture envelope metadata', async () => {
+    const { summarizeReceiptExpectationEvidence } = await import('../src/adapters/shared/expectation-summary.js');
+    const expectation = { amount: '1.25', memo: 'job:warehouse-route-44', machineId: 'robot-arm-17', sessionId: 'mfi_robinhood_fixture_session' };
+    const result = await verifyRobinhoodReceipt(txHash, { fixture: true, expectation });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    const summary = summarizeReceiptExpectationEvidence(expectation, result.value.evidence ?? []);
+    expect(summary.matched).toBe(true);
+    expect(summary.fixtureFields.sort()).toEqual(['amount', 'machineId', 'memo', 'sessionId'].sort());
+    expect(summary.nativeFields).toEqual([]);
+    const { receiptEvidenceCoverageLabel } = await import('../src/adapters/shared/expectation-summary.js');
+    expect(receiptEvidenceCoverageLabel(summary)).toBe('complete');
+  });
+
+  it('throws a compact unavailable-field error for failed expectations', async () => {
+    const { assertExpectedFieldsAvailable } = await import('../src/adapters/shared/expectation-summary.js');
+    const result = await verifySolanaReceipt(sig, { fixture: false, rpcUrl: await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 13, confirmations: null, confirmationStatus: 'finalized', err: null }] } : { slot: 13, meta: { err: null, preBalances: [1, 1], postBalances: [1, 1], logMessages: [] }, transaction: { message: { accountKeys: [fromSol, toSol] } } }), expectation: { amount: '0.5', memo: 'missing' } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(() => assertExpectedFieldsAvailable({ amount: '0.5', memo: 'missing' }, result.value.evidence ?? [])).toThrow(/unavailable: amount, memo/);
+  });
+});
