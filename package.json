@@ -1,7 +1,7 @@
 {
   "name": "@machinefi/runtime",
-  "version": "0.6.0",
-  "description": "SDK and CLI runtime for wallet-linked machine sessions across Solana and Robinhood testnet rails.",
+  "version": "0.8.0",
+  "description": "SDK and CLI runtime for wallet-linked machine sessions across Solana and Robinhood rails.",
   "type": "module",
   "license": "MIT",
   "private": false,
