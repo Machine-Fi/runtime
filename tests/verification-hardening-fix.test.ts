@@ -73,3 +73,78 @@ describe('Robinhood verification hardening', () => {
     const result = await verifyRobinhoodReceipt(txHash, { fixture: true, minConfirmations: 2, expectation: { amount: '1.25' } });
     expect(result.ok).toBe(true); if (!result.ok) return;
     expect(result.value.verified).toBe(false);
+    expect(result.value.confirmations).toBe(1);
+    expect(result.value.finality).toBe('confirmed');
+    expect(result.value.mismatchReasons?.join(' ')).toContain('minimum confirmations not reached');
+  });
+});
+
+describe('Solana transfer evidence hardening', () => {
+  it('verifies fee-aware SOL transfer recipient credit while sender pays fee', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10000000000', '1000000000'], ['4999995000', '6000000000'], ['Program log: Memo: fee-aware']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { from: fromSol, to: toSol, amount: '5', memo: 'fee-aware' } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(true);
+    expect(result.value.evidence?.find((field) => field.field === 'amount')).toMatchObject({ source: 'balance_delta', actual: '5000000000', matched: true });
+    expect(result.value.evidence?.find((field) => field.field === 'amount')?.detail).toContain('fee gap 5000');
+  });
+
+  it('rejects fee-aware transfer when expected amount differs', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10000000000', '1000000000'], ['4999995000', '6000000000']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { from: fromSol, to: toSol, amount: '5.000001' } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.mismatchReasons).toContain('amount mismatch');
+  });
+
+
+  it('does not verify from-only expectation from account involvement alone', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10', '20'], ['10', '20']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { from: fromSol } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.expectationsMatched).toBe(false);
+    expect(result.value.mismatchReasons).toContain('transfer counterparty evidence unavailable');
+    expect(result.value.evidence?.some((field) => field.field === 'from' && field.source === 'balance_delta' && field.matched)).toBe(false);
+  });
+
+  it('does not verify to-only expectation from account involvement alone', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10', '20'], ['10', '20']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { to: toSol } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.expectationsMatched).toBe(false);
+    expect(result.value.mismatchReasons).toContain('transfer counterparty evidence unavailable');
+    expect(result.value.evidence?.some((field) => field.field === 'to' && field.source === 'balance_delta' && field.matched)).toBe(false);
+  });
+
+  it('does not verify recipient-only expectation from account involvement alone', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10', '20'], ['10', '20']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { recipient: toSol } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.expectationsMatched).toBe(false);
+    expect(result.value.mismatchReasons).toContain('transfer counterparty evidence unavailable');
+    expect(result.value.evidence?.some((field) => field.field === 'to' && field.source === 'balance_delta' && field.matched)).toBe(false);
+  });
+
+  it('does not emit matched balance-delta account evidence when transfer evidence is unavailable', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10', '20'], ['10', '20']));
+    for (const expectation of [{ from: fromSol }, { to: toSol }, { recipient: toSol }, { from: fromSol, to: toSol }]) {
+      const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation });
+      expect(result.ok).toBe(true); if (!result.ok) continue;
+      expect(result.value.verified).toBe(false);
+      expect(result.value.expectationsMatched).toBe(false);
+      expect(result.value.evidence?.some((field) => (field.field === 'from' || field.field === 'to') && field.source === 'balance_delta' && field.matched)).toBe(false);
+    }
+  });
+
+  it('does not verify settlement from account involvement without transfer credit', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10', '20'], ['10', '20']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { from: fromSol, to: toSol, amount: '5' } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.mismatchReasons).toEqual(expect.arrayContaining(['transfer direction evidence unavailable', 'expected amount unavailable in transaction']));
+  });
+
+  it('does not verify from/to-only expectations from account involvement alone', async () => {
