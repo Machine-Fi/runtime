@@ -148,3 +148,79 @@ describe('Solana transfer evidence hardening', () => {
   });
 
   it('does not verify from/to-only expectations from account involvement alone', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx(['10', '20'], ['10', '20']));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { from: fromSol, to: toSol } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.mismatchReasons).toContain('transfer direction evidence unavailable');
+  });
+
+  it('keeps unsafe numeric lamport values unavailable instead of rounded', async () => {
+    const url = await rpc((method) => method === 'getSignatureStatuses' ? { value: [{ slot: 44, confirmations: null, confirmationStatus: 'finalized', err: null }] } : solanaTx([9007199254740993, 0], [9007199249740993, 5000000000]));
+    const result = await verifySolanaReceipt(sig, { rpcUrl: url, expectation: { from: fromSol, to: toSol, amount: '5' } });
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.value.verified).toBe(false);
+    expect(result.value.evidence?.find((field) => field.field === 'amount')).toMatchObject({ source: 'unavailable', matched: false });
+  });
+});
+
+describe('policy and telemetry hardening', () => {
+  const machine: MachineIdentity = { machineId: 'robot-arm-17', walletAddress: fromEvm, operatorId: 'ops', role: 'robot', capabilities: ['inspection', 'delivery'] };
+  const policy: MachineJobPolicy = { policyId: 'policy-1', allowedChains: ['robinhood'], maxAmount: '10', allowedCapabilities: ['inspection'], minBatteryPct: 20 };
+  const job = createMachineJob({ jobId: 'job-policy-1', machineId: 'robot-arm-17', requiredCapabilities: ['delivery'], chain: 'robinhood', settlementAmount: '1', recipient: toEvm });
+
+  it('enforces policy allowedCapabilities', () => {
+    const telemetry = normalizeTelemetrySnapshot({ machineId: 'robot-arm-17', observedAt: '2026-07-14T00:00:00Z', batteryPct: 90, health: 'nominal' });
+    const decision = evaluateMachineJobPolicy(machine, job, telemetry, policy, new Date('2026-07-14T00:01:00Z'));
+    expect(decision.accepted).toBe(false);
+    expect(decision.reasons).toContain('capability not allowed by policy');
+  });
+
+  it('rejects telemetry from a different machine', () => {
+    const telemetry = normalizeTelemetrySnapshot({ machineId: 'sensor-99', observedAt: '2026-07-14T00:00:00Z', batteryPct: 90, health: 'nominal' });
+    const decision = evaluateMachineJobPolicy(machine, { ...job, requiredCapabilities: ['inspection'] }, telemetry, policy, new Date('2026-07-14T00:01:00Z'));
+    expect(decision.accepted).toBe(false);
+    expect(decision.reasons).toContain('telemetry machine mismatch');
+  });
+
+  it('rejects future telemetry timestamps as unusable', () => {
+    const telemetry = normalizeTelemetrySnapshot({ machineId: 'robot-arm-17', observedAt: '2026-07-14T00:10:00Z', batteryPct: 90, health: 'nominal' });
+    expect(telemetryIsUsable(telemetry, new Date('2026-07-14T00:01:00Z'))).toBe(false);
+  });
+
+  it('rejects non-finite location and pose values', () => {
+    expect(() => normalizeTelemetrySnapshot({ machineId: 'robot-arm-17', observedAt: '2026-07-14T00:00:00Z', health: 'nominal', location: { lat: Number.NaN, lon: 1 } })).toThrow(/latitude/);
+    expect(() => normalizeTelemetrySnapshot({ machineId: 'robot-arm-17', observedAt: '2026-07-14T00:00:00Z', health: 'nominal', location: { lat: 1, lon: Number.NaN } })).toThrow(/longitude/);
+    expect(() => normalizeTelemetrySnapshot({ machineId: 'robot-arm-17', observedAt: '2026-07-14T00:00:00Z', health: 'nominal', pose: { x: Number.NaN, y: 0 } })).toThrow(/pose.x/);
+    expect(() => normalizeTelemetrySnapshot({ machineId: 'robot-arm-17', observedAt: '2026-07-14T00:00:00Z', health: 'nominal', pose: { x: 0, y: 0, yawDeg: Infinity } })).toThrow(/pose.yawDeg/);
+  });
+});
+
+describe('settlement intent nonce and precision hardening', () => {
+  const base = { chain: 'robinhood' as const, source: fromEvm, recipient: toEvm, amount: '1', machineId: 'robot-arm-17', sessionId: 'session-1', policyId: 'policy-1', now: '2026-07-14T00:00:00Z' };
+
+  it('uses nondeterministic default nonces and intent ids', () => {
+    const a = buildSettlementIntent(base);
+    const b = buildSettlementIntent(base);
+    expect(a.nonce).not.toBe(b.nonce);
+    expect(a.intentId).not.toBe(b.intentId);
+  });
+
+  it('preserves explicit nonce determinism', () => {
+    const a = buildSettlementIntent({ ...base, nonce: 'explicit-nonce' });
+    const b = buildSettlementIntent({ ...base, nonce: 'explicit-nonce' });
+    expect(a.nonce).toBe('explicit-nonce');
+    expect(a.intentId).toBe(b.intentId);
+  });
+
+  it('enforces Solana SOL and USDC decimal precision', () => {
+    expect(() => buildSolanaSettlementIntent({ source: fromSol, recipient: toSol, amount: '0.0000000001', asset: 'SOL', machineId: 'drone-9', sessionId: 'session-1', policyId: 'policy-1' })).toThrow(/more than 9 decimal/);
+    expect(buildSolanaSettlementIntent({ source: fromSol, recipient: toSol, amount: '0.000001', asset: 'USDC', machineId: 'drone-9', sessionId: 'session-1', policyId: 'policy-1' }).amount).toBe('0.000001');
+    expect(() => buildSolanaSettlementIntent({ source: fromSol, recipient: toSol, amount: '0.0000001', asset: 'USDC', machineId: 'drone-9', sessionId: 'session-1', policyId: 'policy-1' })).toThrow(/more than 6 decimal/);
+  });
+
+  it('enforces Robinhood ETH precision', () => {
+    expect(buildRobinhoodSettlementIntent({ source: fromEvm, recipient: toEvm, amount: '0.123456789012345678', asset: 'ETH', machineId: 'robot-arm-17', sessionId: 'session-1', policyId: 'policy-1' }).amount).toBe('0.123456789012345678');
+    expect(() => buildRobinhoodSettlementIntent({ source: fromEvm, recipient: toEvm, amount: '0.1234567890123456789', asset: 'ETH', machineId: 'robot-arm-17', sessionId: 'session-1', policyId: 'policy-1' })).toThrow(/more than 18 decimal/);
+  });
+});
