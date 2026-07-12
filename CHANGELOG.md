@@ -1,37 +1,35 @@
 # Changelog
 
-## v0.1.x — Package scaffold and deterministic fixtures
+## v0.9.4 — Stable npm release
 
-- Established the TypeScript package, CLI entrypoint, deterministic fixtures, validation workflow, and public documentation structure.
+- Added fleet registry helpers for machine availability, status, capability gating, telemetry summaries, and public-safe fleet summaries.
+- Added deeper work-order lifecycle helpers with queued, assigned, preparing, working, proof-submitted, settled, failed, and cancelled stages.
+- Added telemetry evidence references and work evidence bundles that link machine, work order, session, telemetry, result/media references, settlement intent, and receipt expectations.
+- Added source-aware receipt evidence for Robinhood and Solana so native chain evidence is separated from fixture or MachineFi envelope metadata.
+- Added precision-safe decimal/base-unit amount comparison for ETH wei and SOL lamports evidence.
+- Added tests for fleet assignment, work-order proof gates, telemetry evidence, receipt evidence sources, Solana transfer semantics, memo logs, and bigint amount precision.
 
-- Added deterministic fixture setup for early package checks.
+## v0.9.3 — Public package and README alignment
 
-## v0.3.x — Solana and generic runtime foundations
+- Kept GitHub README focused on the public runtime interface for the broader MachineFi Robotics platform.
+- Kept package install examples on `@machinefi/runtime@0.9.3` while the next runtime candidate remains unpublished.
+- Clarified closed-core production orchestration boundaries without reducing the repository to only a CLI.
 
-- Added Solana session, signature/status verification, fixture transport, and CLI scaffolding.
-- Added generic machine session schemas, provider config, receipt schemas, and settlement-intent primitives.
+## v0.8.x — Robinhood mainnet examples after public launch
 
-- Extended Solana receipt checks with signature, status, and memo-oriented evidence.
-
-- Extended Solana receipt checks with signature, status, and memo-oriented evidence.
-
-- Extended Solana receipt checks with signature, status, and memo-oriented evidence.
-
-- Extended Solana receipt checks with signature, status, and memo-oriented evidence.
-
-## v0.4.x — Generic EVM provider groundwork
-
-- Added provider transport boundaries and receipt evidence types used by EVM-compatible rails.
-
-- Added EVM-compatible evidence shapes before rail-specific adapters.
-
-- Added EVM-compatible evidence shapes before rail-specific adapters.
-
-- Hardened amount comparison and unavailable-evidence summaries.
+- Added Robinhood Chain mainnet documentation and examples after the July 1, 2026 mainnet launch.
+- Preserved caller-supplied provider endpoint guidance for production-style live-read checks.
 
 ## v0.6.x — Robinhood testnet rail
 
 - Added Robinhood testnet rail metadata and fixture examples after the public testnet window.
 - Kept EVM-compatible abstractions separate from mainnet examples until mainnet availability.
 
-- Added EVM rail status checks for public testnet fixtures.
+## v0.3.x — Solana and generic runtime foundations
+
+- Added Solana session, signature/status verification, fixture transport, and CLI scaffolding.
+- Added generic machine session schemas, provider config, receipt schemas, and settlement-intent primitives.
+
+## v0.1.x — Package scaffold and deterministic fixtures
+
+- Established the TypeScript package, CLI entrypoint, deterministic fixtures, validation workflow, and public documentation structure.
