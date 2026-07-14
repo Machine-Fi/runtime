@@ -4,8 +4,8 @@
 [![npm](https://img.shields.io/npm/v/@machinefi/runtime.svg)](https://www.npmjs.com/package/@machinefi/runtime)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![TypeScript SDK + CLI](https://img.shields.io/badge/TypeScript-SDK%20%2B%20CLI-blue.svg)
-![Solana rail](https://img.shields.io/badge/Solana-rail-6f42c1.svg)
-![Robinhood Chain rail](https://img.shields.io/badge/Robinhood%20Chain-rail-00a76f.svg)
+![Solana | Mainnet](https://img.shields.io/badge/Solana-Mainnet-6f42c1.svg)
+![Robinhood | Mainnet](https://img.shields.io/badge/Robinhood-Mainnet-00a76f.svg)
 ![Deterministic fixtures](https://img.shields.io/badge/fixtures-deterministic%20runtime%20checks-orange.svg)
 
 MachineFi Runtime is the public TypeScript SDK and CLI for wallet-linked autonomous machines: robot arms, drones, sensors, rovers, warehouse bots, and DePIN/edge hardware. It gives developers inspectable building blocks for machine identity, capabilities, job lifecycle, telemetry snapshots, policy decisions, unsigned settlement intents, work proofs, and receipt verification.
@@ -16,6 +16,7 @@ Solana and Robinhood rails sit underneath the machine runtime as settlement, pro
 
 MachineFi Runtime progressed through early GitHub builds from `v0.1.0` to the current `v0.9.4` stable npm release. Earlier milestones are available as Git tags for implementation history and package-readiness review.
 
+MachineFi Runtime began with Solana and generic machine-runtime interfaces, then added EVM-compatible abstractions. Robinhood testnet support follows the public testnet track, and Robinhood mainnet examples are documented only after Robinhood Chain mainnet launched on July 1, 2026. Developers should use the latest npm package version for current Robinhood Chain behavior.
 
 ## What this repo exposes
 
