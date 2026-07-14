@@ -1,5 +1,5 @@
 export type EvidenceSource = 'native_receipt' | 'transaction' | 'log_event' | 'memo_log' | 'balance_delta' | 'machinefi_envelope' | 'fixture' | 'unavailable';
-export type EvidenceField = 'status' | 'chainId' | 'from' | 'to' | 'amount' | 'memo' | 'machineId' | 'sessionId' | 'accountInvolvement' | 'transfer';
+export type EvidenceField = 'status' | 'chainId' | 'from' | 'to' | 'amount' | 'asset' | 'memo' | 'machineId' | 'sessionId' | 'accountInvolvement' | 'transfer';
 export interface ReceiptEvidenceField { field: EvidenceField; source: EvidenceSource; matched?: boolean | undefined; expected?: string | undefined; actual?: string | undefined; detail?: string | undefined; }
 export interface SettlementEvidence { native: ReceiptEvidenceField[]; envelope: ReceiptEvidenceField[]; unavailable: ReceiptEvidenceField[]; }
 export const evidence = (field: EvidenceField, source: EvidenceSource, input: Omit<ReceiptEvidenceField, 'field' | 'source'> = {}): ReceiptEvidenceField => ({ field, source, ...input });

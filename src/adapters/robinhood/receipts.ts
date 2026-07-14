@@ -27,6 +27,11 @@ function compareExpectation(receipt: EvmReceipt, tx: EvmTransaction | undefined,
     if (!actual) { reasons.push('expected recipient unavailable in receipt'); fields.push(evidence('to','unavailable',{ expected: expectedTo, matched: false })); }
     else { const matched = norm(expectedTo) === norm(actual); if (!matched) reasons.push('to address mismatch'); fields.push(evidence('to', tx?.to ? 'transaction' : 'native_receipt', { expected: expectedTo, actual, matched })); }
   }
+  if (expectation.asset) {
+    const matched = expectation.asset.toUpperCase() === 'ETH';
+    if (!matched) reasons.push(`asset ${expectation.asset} is not supported by native Robinhood receipt verification`);
+    fields.push(evidence('asset', matched ? 'native_receipt' : 'unavailable', { expected: expectation.asset, actual: 'ETH', matched, detail: matched ? 'native Robinhood value evidence is denominated in ETH' : 'ERC-20 or contract-event asset evidence is not available in this verifier' }));
+  }
   if (expectation.amount) {
     if (tx?.value) { const matched = baseUnitsEqualDecimal(tx.value, expectation.amount, 18); if (!matched) reasons.push('amount mismatch'); fields.push(evidence('amount','transaction',{ expected: expectation.amount, actual: tx.value, matched, detail: 'ETH value compared in wei/base units' })); }
     else if (fixture && receipt.value !== undefined) { const matched = receipt.value === expectation.amount; if (!matched) reasons.push('amount mismatch'); fields.push(evidence('amount','fixture',{ expected: expectation.amount, actual: receipt.value, matched, detail: 'fixture envelope amount, not native EVM receipt value' })); }

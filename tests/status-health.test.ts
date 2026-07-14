@@ -17,3 +17,15 @@ it('fixture RPC transport returns missing methods', async () => {
   const transport = new FixtureRpcTransport({ eth_chainId: '0x1237' });
   await expect(transport.request('missing')).rejects.toThrow(/missing/);
 });
+
+
+it('reports Solana live-read reachability without claiming cluster identity from getVersion alone', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { 'solana-core': '1.18.0', 'feature-set': 123 } }), { status: 200, headers: { 'content-type': 'application/json' } })) as typeof fetch;
+  const result = await checkChainStatus({ chain: 'solana', rpcUrl: 'https://example.invalid', timeoutMs: 100 });
+  globalThis.fetch = original;
+  expect(result.ok).toBe(true);
+  expect(result.rpcReachable).toBe(true);
+  expect(result.chainMatched).toBe(false);
+  expect(result.details.networkVerification).toBe('unavailable');
+});

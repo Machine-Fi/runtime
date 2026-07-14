@@ -13,7 +13,7 @@ The Robinhood adapter owns chain metadata for chain ID `4663`, EVM address/hash 
 
 ### Solana adapter
 
-The Solana adapter owns base58 address/signature validation, explorer URL generation, `getSignatureStatuses`, and `getTransaction` read-only verification semantics. It handles missing transactions and status errors explicitly and returns typed verification results.
+The Solana adapter owns base58 address/signature validation, explorer URL generation, `getSignatureStatuses`, and `getTransaction` read-only verification semantics. It handles missing transactions and status errors explicitly and returns typed verification results. Solana `getVersion` proves endpoint reachability, not cluster identity; live status results therefore avoid claiming a mainnet/devnet/testnet match from version data alone.
 
 ### RPC transport
 

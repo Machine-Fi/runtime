@@ -4,17 +4,17 @@ Receipt verification returns what the runtime can prove from each rail and where
 
 ## Robinhood / EVM rail
 
-Robinhood verification first checks `eth_chainId`. Receipt status, block number, sender/recipient, and logs are native receipt evidence. Native ETH amount is not part of a standard EVM receipt, so live amount checks use `eth_getTransactionByHash` transaction value and compare wei/base units with bigint-safe decimal conversion. MachineFi metadata such as machine id, session id, or memo is treated as envelope/event evidence when available, and as fixture evidence in deterministic examples.
+Robinhood verification first checks `eth_chainId`. Receipt status, block number, sender/recipient, and logs are native receipt evidence. Native ETH amount is not part of a standard EVM receipt, so live amount checks use `eth_getTransactionByHash` transaction value and compare wei/base units with bigint-safe decimal conversion. MachineFi metadata such as machine id, session id, or memo is treated as envelope/event evidence when available, and as fixture evidence in deterministic examples. Native Robinhood value checks are ETH-only; token or contract-event asset expectations remain unavailable unless a caller supplies verifier support for that evidence.
 
 ## Solana rail
 
-Solana verification separates signature status/finality from transaction detail evidence. Account keys prove account involvement; they do not by themselves prove transfer settlement. SOL amount checks use lamport balance-delta evidence when the transaction shape supports it. Memo expectations can be matched from memo/log evidence. Missing transfer, memo, machine id, or session evidence produces explicit mismatch reasons rather than a false positive.
+Solana verification separates signature status/finality from transaction detail evidence. Account keys prove account involvement; they do not by themselves prove transfer settlement. SOL amount checks use lamport balance-delta evidence when the transaction shape supports it. SPL-token or program-specific asset expectations remain unavailable in the native SOL verifier rather than being inferred from account involvement. Memo expectations can be matched from memo/log evidence. Missing transfer, memo, machine id, or session evidence produces explicit mismatch reasons rather than a false positive.
 
 Fixture mode keeps examples deterministic, but fixture fields are labeled as fixture/envelope metadata rather than native chain evidence.
 
 ## Amount and finality handling
 
-Robinhood amount checks use transaction value evidence when the provider can return the transaction by hash; receipt-only data leaves amount evidence unavailable. Live Robinhood confirmation counts are derived from the current block height when the receipt block is known.
+Robinhood amount checks use transaction value evidence when the provider can return the transaction by hash; receipt-only data leaves amount evidence unavailable. Live Robinhood confirmation counts are derived from the current block height when the receipt block is known. The `finalized` label means a configurable confirmation-depth threshold was reached; it is not a separate chain-native finality proof.
 
 Solana amount checks compare lamport/base-unit deltas with bigint-safe arithmetic. If balance data is absent or outside safe parsing boundaries, amount evidence remains unavailable instead of being treated as verified.
 

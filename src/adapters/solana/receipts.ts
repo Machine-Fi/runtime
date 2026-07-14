@@ -36,6 +36,11 @@ function compareExpectation(tx: SolanaTransaction | undefined, status: 'success'
     else if (!transfer) { addReason('transfer direction evidence unavailable'); fields.push(evidence('accountInvolvement','transaction',{ expected: expectedTo, matched: false, detail: 'account involvement only, not transfer settlement' })); }
     else { fields.push(evidence('to','balance_delta',{ expected: expectedTo, matched: true, detail: 'recipient credit supports transfer direction' })); }
   }
+  if (expectation.asset) {
+    const matched = expectation.asset.toUpperCase() === 'SOL';
+    if (!matched) reasons.push(`asset ${expectation.asset} is not supported by native Solana SOL verification`);
+    fields.push(evidence('asset', matched ? 'balance_delta' : 'unavailable', { expected: expectation.asset, actual: 'SOL', matched, detail: matched ? 'native SOL evidence uses lamport balance deltas' : 'SPL-token or program-specific asset evidence is not available in this verifier' }));
+  }
   if (expectation.amount) {
     if (transfer !== undefined) { const matched = baseUnitsEqualDecimal(transfer.recipientCredit, expectation.amount, 9); if (!matched) reasons.push('amount mismatch'); fields.push(evidence('amount','balance_delta',{ expected: expectation.amount, actual: transfer.recipientCredit.toString(), matched, detail: `SOL recipient credit in lamports; sender debit ${transfer.senderDebit.toString()}; fee gap ${transfer.feeGap.toString()}` })); }
     else if (fixture && tx?.amount !== undefined) { const matched = tx.amount === expectation.amount; if (!matched) reasons.push('amount mismatch'); fields.push(evidence('amount','fixture',{ expected: expectation.amount, actual: tx.amount, matched, detail: 'fixture envelope amount, not reconstructed transfer evidence' })); }

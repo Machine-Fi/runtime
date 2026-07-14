@@ -18,7 +18,7 @@ export async function checkChainStatus(input: { chain: RuntimeChain; fixture?: b
     }
     const transport = createSolanaTransport({ rpcUrl: input.rpcUrl ?? solanaRpcUrl(), timeoutMs: input.timeoutMs });
     const version = await transport.request<{ 'solana-core'?: string; 'feature-set'?: number }>('getVersion', []);
-    return { ok: true, mode: 'live-read', chain: 'solana', chainMatched: true, rpcReachable: true, latencyMs: nowMs() - started, details: { version } };
+    return { ok: true, mode: 'live-read', chain: 'solana', chainMatched: false, rpcReachable: true, latencyMs: nowMs() - started, details: { version, networkVerification: 'unavailable', reason: 'Solana getVersion proves RPC reachability but does not identify mainnet/devnet/testnet/private cluster' } };
   } catch (cause) {
     return { ok: false, mode: 'live-read', chain: input.chain, chainMatched: false, rpcReachable: false, latencyMs: nowMs() - started, details: {}, error: cause instanceof Error ? cause.message : 'status check failed' };
   }

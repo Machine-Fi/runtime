@@ -28,3 +28,20 @@ it('throws JSON-RPC error messages', async () => {
   await expect(new LiveRpcTransport('https://example.invalid').request('eth_chainId')).rejects.toThrow(/provider failed/);
   globalThis.fetch = original;
 });
+
+
+it('rejects unsupported Robinhood asset expectations instead of matching amount alone', async () => {
+  const result = await verifyRobinhoodReceipt('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', { fixture: true, expectation: { amount: '1.25', asset: 'DOGE' } });
+  expect(result.ok).toBe(true); if (!result.ok) return;
+  expect(result.value.verified).toBe(false);
+  expect(result.value.mismatchReasons).toContain('asset DOGE is not supported by native Robinhood receipt verification');
+  expect(result.value.evidence).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'asset', source: 'unavailable', matched: false })]));
+});
+
+it('rejects unsupported Solana asset expectations instead of matching amount alone', async () => {
+  const result = await verifySolanaReceipt('5HueCGU8rMjxEXxiPuD5BDuRaRj1hUXQG48GhYnjmQumooWcT3Yr4v7e1i4bnzK7t1Q7Fxx4E2VPu7Y9xV1r5fq', { fixture: true, expectation: { amount: '0.5', asset: 'USDC' } });
+  expect(result.ok).toBe(true); if (!result.ok) return;
+  expect(result.value.verified).toBe(false);
+  expect(result.value.mismatchReasons).toContain('asset USDC is not supported by native Solana SOL verification');
+  expect(result.value.evidence).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'asset', source: 'unavailable', matched: false })]));
+});
